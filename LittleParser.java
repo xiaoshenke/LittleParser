@@ -51,9 +51,7 @@ class LittleParser{
     static int TOKEN_KEYWORDS = 4;
     static int TOKEN_VARIABLE = 5;
 
-    //typeList:   typeType (',' typeType)*
-    //Todo: 这里返回的是一个list 还是只是一个int???? 还是说这里不会有模糊点？直接拿到最长匹配就可以了？
-    //目前的理解是：只要拿到最长匹配字符串就可以了.....先这么做 不行就换方法
+    //目前的策略：匹配到最长字符串
     int matchTypeList(int current){
 
         int pos = matchTypeType(current);  
@@ -79,24 +77,24 @@ class LittleParser{
         return pos;
     }
 
-    //todo
+    //Todo
     int matchPrimitiveType(int current){
         return -1;
     }
 
     //typeType:   classOrInterfaceType ('[' ']')* | primitiveType ('[' ']')*
     int matchTypeType(int current){
+        System.out.println("matchTypeType index:"+current);
         int next = matchClassOrInterfaceType(current);
         if(next == -1){ //匹配失败
-            ;
-        } else {
             next = matchPrimitiveType(current);
-        }
+        } 
         return next;
     }
 
     //classOrInterfaceType:Identifier typeArguments? ('.' Identifier typeArguments? )*
     int matchClassOrInterfaceType(int current){
+        System.out.println("matchClassOrInterfaceType index:"+current);
         Token token = tokens.get(current);
         if(token.type == TOKEN_VARIABLE){
         
@@ -107,6 +105,9 @@ class LittleParser{
 
             int tmp = current;
             while(true){
+                if(tmp == tokens.size()-1){
+                    break;
+                }
                 if(tokens.get(tmp+1).type != TOKEN_TERMINAL || (char)(tokens.get(tmp+1).obj) != '.'){
                     break;
                 }
@@ -132,9 +133,10 @@ class LittleParser{
 
     //typeArguments:   '<' typeArgument (',' typeArgument)* '>' //java范型
     int matchTypeArguments(int current){
+        System.out.println("matchTypeArguments index:"+current);
         Token token = tokens.get(current);
         if(token.type == TOKEN_TERMINAL && (char)(token.obj) == '<'){
-            current++;
+            //current++;
             int ret = matchTypeArgument(current+1);
             if(ret == -1){ //事实上这里是出错了,这里先挑出处理...Todo:throw an exception
                 return -1;
@@ -153,7 +155,6 @@ class LittleParser{
                 tmp = ret;
                 current = tmp;
             }
-
             if(tokens.get(current+1).type != TOKEN_TERMINAL || (char)(tokens.get(current+1).obj) != '>'){ //事实上这里是出错了,这里先挑出处理...Todo:throw an exception
                 return -1;
             }
@@ -173,7 +174,7 @@ class LittleParser{
             return -1;
         }
         int tmp = current;
-        if(tokens.get(tmp+1).type == TOKEN_KEYWORDS && tokens.get(tmp+1).obj.equals("extends")){
+        if(tokens.get(tmp+1).type == TOKEN_KEYWORDS && ((String)(tokens.get(tmp+1).obj)).equals("extends")){
             tmp++;
             int ret = matchTypeBound(tmp+1);
             if(ret == -1){ //事实上这里是出错了,这里先挑出处理...Todo:throw an exception
@@ -189,6 +190,7 @@ class LittleParser{
 
     //typeBound:   typeType ('&' typeType)*
     int matchTypeBound(int current){
+        System.out.println("matchTypeBound index:"+current);
         current = matchTypeType(current);
         if(current != -1){
             int tmp = current;
@@ -216,7 +218,8 @@ class LittleParser{
 
     //Identifier:   JavaLetter JavaLetterOrDigit*
     int matchIdentifier(int current){
-        if(tokens.get(current).type == TOKEN_TERMINAL){
+        System.out.println("matchIdentifier index:"+current);
+        if(tokens.get(current).type == TOKEN_VARIABLE){
             return current;
         } else {
             return -1;
@@ -263,7 +266,7 @@ class LittleParser{
     	keywords.add("class");
     	keywords.add("extends");
     	keywords.add("implements");
-    	keywords.add("int");
+    	//keywords.add("int");
 
     }
 
@@ -319,14 +322,14 @@ class LittleParser{
  		}
  	}
 
-
-
  	//goal is to implement TypeList --> (int,Some-Class<T extends Other-class>)
 	public static void main(String[] args){
 		String content = "int,Some_Class<T extends Other_class>";
         content="A<D,B extends C<int>>";
 		LittleParser parser = new LittleParser();
 		parser.lexical(content);
+
+        System.out.println("begin match: "+content);
         int ret = parser.matchTypeType(0);
         if(ret == -1){
             System.out.println("match fail");
