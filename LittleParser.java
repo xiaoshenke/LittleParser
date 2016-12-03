@@ -42,6 +42,7 @@ class LittleParser{
     static Set<Character> bracket;
     static Set<Character> terminal;
     static Set<String> keywords;
+    static Set<String> primitives;
 
     static int TOKEN_NONE_TYPE = -1;
     static int TOKEN_JAVALETTER = 0;
@@ -50,36 +51,183 @@ class LittleParser{
     static int TOKEN_TERMINAL = 3;
     static int TOKEN_KEYWORDS = 4;
     static int TOKEN_VARIABLE = 5;
+    static int TOKEN_PRIMITIVE = 6;
 
-    //目前的策略：匹配到最长字符串
-    int matchTypeList(int current){
+    private boolean checkIndex(int index){
+        return index< tokens.size();
+    }
 
-        int pos = matchTypeType(current);  
+    //classDeclaration:'class' Identifier typeParameters? ('extends' typeType)? ('implements' typeList)? classBody
+    int matchClassDeclaration(int current){
+        System.out.println("matchClassDeclaration index:"+current);
+        if(!checkIndex(current)){
+            return -1;
+        }
 
-        List<Integer> poslist = new ArrayList<Integer>();
-        poslist.add(pos+1);
+        if(tokens.get(current).type != TOKEN_KEYWORDS || !((String)(tokens.get(current)).obj).equals("class")){
+            return -1;
+        }
 
-        int next = pos+1;
+        current++;
+
+        int ret = matchIdentifier(current);
+        if(ret == -1){
+            return -1;
+        }
+
+        current=ret;
+
+        ret = matchTypeParameters(current+1);
+        current = ret == -1?current:ret;
+
+        int tmp=current;
+        if(!checkIndex(tmp+1)){
+            return -1;
+        }
+
+        if(tokens.get(tmp+1).type == TOKEN_KEYWORDS && ((String)(tokens.get(tmp+1).obj)).equals("extends")){
+            tmp++;
+            ret = matchTypeType(tmp+1);
+            if(ret != -1){
+                current = ret;
+            }
+        }
+
+        tmp = current;
+        if(!checkIndex(tmp+1)){
+            return -1;
+        }
+
+        if(tokens.get(tmp+1).type == TOKEN_KEYWORDS && ((String)(tokens.get(tmp+1).obj)).equals("implements")){
+            tmp++;
+            ret = matchTypeList(tmp+1);
+            if(ret != -1){
+                current = ret;
+            }
+        }
+
+        if(!checkIndex(current+1)){
+            return -1;
+        }
+
+        if(tokens.get(current+1).type == TOKEN_TERMINAL && (char)(tokens.get(current+1).obj)=='{'){
+            current++;
+        }
+        return current;
+    }
+
+    //typeParameters:   '<' typeParameter (',' typeParameter)* '>'
+    int matchTypeParameters(int current){
+        System.out.println("matchTypeParameters index:"+current);
+        if(!checkIndex(current)){
+            return -1;
+        }
+        if(tokens.get(current).type != TOKEN_TERMINAL || (char)(tokens.get(current).obj) != '<'){
+            return -1;
+        }
+
+        current++;
+        int ret = matchTypeParameter(current);
+        if(ret == -1){
+            return -1;
+        }
+        current = ret;
+        int tmp = current;
         while(true){
-            if(tokens.get(next).type == ','){
-                next++;
-                int result = matchTypeType(next);
-                if(result == -1){
-                    ;//Todo error??????
-                }
-                //ret.add(result);
-            } else{
+            if(!checkIndex(tmp+1)){
                 break;
             }
 
+            if(tokens.get(tmp+1).type != TOKEN_TERMINAL || (char)(tokens.get(tmp+1).obj)!=','){
+                break;
+            }
+            tmp++;
+            ret = matchTypeParameter(tmp+1);
+            if(ret == -1){ //Todo:throw an exception
+                ;
+            }else{
+                tmp = ret;
+                current = tmp;
+            }
         }
 
-        return pos;
+        if(!checkIndex(current+1)){
+            return -1;
+        }
+
+        if(tokens.get(current+1).type != TOKEN_TERMINAL || (char)(tokens.get(current+1).obj) != '>'){
+            return -1;
+        }
+        current++;
+        return current;
     }
 
-    //Todo
+    //typeParameter:   Identifier ('extends' typeBound)?
+    int matchTypeParameter(int current){
+        System.out.println("matchTypeParameter index:"+current);
+        current = matchIdentifier(current);
+        if(current == -1){
+            return -1;
+        }
+
+        int tmp = current;
+        if(!checkIndex(tmp+1)){
+            return current;
+        }
+
+        if(tokens.get(tmp+1).type==TOKEN_KEYWORDS && ((String)(tokens.get(tmp+1).obj)).equals("extends")){
+            tmp++;
+            int ret = matchTypeBound(tmp+1);
+            if(ret != -1){
+                current = ret;
+            }
+        }
+
+        return current;
+    }
+
+    //目前的策略：匹配到最长字符串
+    //typeList:   typeType (',' typeType)*
+    int matchTypeList(int current){
+        System.out.println("matchTypeList index:"+current);
+        if(!checkIndex(current)){
+            return -1;
+        }
+
+        current = matchTypeType(current);
+        if(current == -1){
+            return -1;
+        }
+        int tmp = current;
+        while(true){
+            if(!checkIndex(tmp+1)){
+                break;
+            }
+            if(tokens.get(tmp+1).type == TOKEN_TERMINAL && (char)(tokens.get(tmp+1).obj) == ','){
+                tmp++;
+                int ret = matchTypeType(tmp+1);
+                if(ret == -1){ //TODO:throw an exception
+                    ;
+                }else{
+                    tmp = ret;
+                    current = tmp;
+                }
+            }
+        }
+        return current;
+    }
+
+    //primitiveType:   'boolean'|'char'|'byte'|'short'|'int'|'long'|'float'|'double'
     int matchPrimitiveType(int current){
-        return -1;
+        System.out.println("matchPrimitiveType index:"+current);
+        if(!checkIndex(current)){
+            return -1;
+        }
+        if(tokens.get(current).type == TOKEN_PRIMITIVE){
+            return current;
+        } else{
+            return -1;
+        }
     }
 
     //typeType:   classOrInterfaceType ('[' ']')* | primitiveType ('[' ']')*
@@ -95,6 +243,9 @@ class LittleParser{
     //classOrInterfaceType:Identifier typeArguments? ('.' Identifier typeArguments? )*
     int matchClassOrInterfaceType(int current){
         System.out.println("matchClassOrInterfaceType index:"+current);
+        if(!checkIndex(current)){
+            return -1;
+        }
         Token token = tokens.get(current);
         if(token.type == TOKEN_VARIABLE){
         
@@ -105,7 +256,7 @@ class LittleParser{
 
             int tmp = current;
             while(true){
-                if(tmp == tokens.size()-1){
+                if(!checkIndex(tmp+1)){
                     break;
                 }
                 if(tokens.get(tmp+1).type != TOKEN_TERMINAL || (char)(tokens.get(tmp+1).obj) != '.'){
@@ -134,9 +285,11 @@ class LittleParser{
     //typeArguments:   '<' typeArgument (',' typeArgument)* '>' //java范型
     int matchTypeArguments(int current){
         System.out.println("matchTypeArguments index:"+current);
+        if(!checkIndex(current)){
+            return -1;
+        }
         Token token = tokens.get(current);
         if(token.type == TOKEN_TERMINAL && (char)(token.obj) == '<'){
-            //current++;
             int ret = matchTypeArgument(current+1);
             if(ret == -1){ //事实上这里是出错了,这里先挑出处理...Todo:throw an exception
                 return -1;
@@ -144,6 +297,9 @@ class LittleParser{
             current = ret;
             int tmp = current;
             while(true){
+                if(!checkIndex(tmp+1)){
+                    break;
+                }
                 if(tokens.get(tmp+1).type != TOKEN_TERMINAL || (char)(tokens.get(tmp+1).obj) != ','){
                     break;
                 }
@@ -154,6 +310,9 @@ class LittleParser{
                 }
                 tmp = ret;
                 current = tmp;
+            }
+            if(!checkIndex(current+1)){
+                return -1;
             }
             if(tokens.get(current+1).type != TOKEN_TERMINAL || (char)(tokens.get(current+1).obj) != '>'){ //事实上这里是出错了,这里先挑出处理...Todo:throw an exception
                 return -1;
@@ -174,6 +333,9 @@ class LittleParser{
             return -1;
         }
         int tmp = current;
+        if(!checkIndex(tmp+1)){
+            return -1;
+        }
         if(tokens.get(tmp+1).type == TOKEN_KEYWORDS && ((String)(tokens.get(tmp+1).obj)).equals("extends")){
             tmp++;
             int ret = matchTypeBound(tmp+1);
@@ -195,6 +357,9 @@ class LittleParser{
         if(current != -1){
             int tmp = current;
             while(true){
+                if(!checkIndex(tmp+1)){
+                    break;
+                }
                 if(tokens.get(tmp+1).type == TOKEN_TERMINAL && (char)(tokens.get(tmp+1).obj) == '&'){
                     tmp++;
                     int ret = matchTypeType(tmp+1);
@@ -219,6 +384,9 @@ class LittleParser{
     //Identifier:   JavaLetter JavaLetterOrDigit*
     int matchIdentifier(int current){
         System.out.println("matchIdentifier index:"+current);
+        if(!checkIndex(current)){
+            return -1;
+        }
         if(tokens.get(current).type == TOKEN_VARIABLE){
             return current;
         } else {
@@ -261,12 +429,23 @@ class LittleParser{
     	terminal.add('>');
     	terminal.add(',');
         terminal.add('.');
+        terminal.add('{');
 
     	keywords = new HashSet<String>();
     	keywords.add("class");
     	keywords.add("extends");
     	keywords.add("implements");
     	//keywords.add("int");
+
+        //primitiveType:'boolean'|'char'|'byte'|'short'|'int'|'long'|'float'|'double'
+        primitives = new HashSet<String>();
+        primitives.add("boolean");primitives.add("char");
+        primitives.add("byte");
+        primitives.add("short");
+        primitives.add("int");
+        primitives.add("long");
+        primitives.add("float");
+        primitives.add("double");
 
     }
 
@@ -311,26 +490,31 @@ class LittleParser{
  				}
  				if(keywords.contains(builder.toString())){
  					tokens.add(new Token(TOKEN_KEYWORDS,builder.toString()));
- 				}else{
+ 				} else if(primitives.contains(builder.toString())){
+                    tokens.add(new Token(TOKEN_PRIMITIVE,builder.toString()));
+                }else{
  					tokens.add(new Token(TOKEN_VARIABLE,builder.toString()));
  				}
  				i = j+1;
  			}
  		}
- 		for(Token token:tokens){
- 			System.out.println(String.format("token type: %d,content: %s ",token.type,token.obj.toString()));
+
+ 		for(int i=0;i<tokens.size();i++){
+            Token token = tokens.get(i);
+ 			System.out.println(String.format("token type: %d,index: %d,content: %s ",token.type,i,token.obj.toString()));
  		}
  	}
 
  	//goal is to implement TypeList --> (int,Some-Class<T extends Other-class>)
 	public static void main(String[] args){
 		String content = "int,Some_Class<T extends Other_class>";
-        content="A<D,B extends C<int>>";
+        content="A<D,B extends C<D>>";
+        content="class A<Integer,D extends E> extends B<Integer,D> {";
 		LittleParser parser = new LittleParser();
 		parser.lexical(content);
 
         System.out.println("begin match: "+content);
-        int ret = parser.matchTypeType(0);
+        int ret = parser.matchClassDeclaration(0);
         if(ret == -1){
             System.out.println("match fail");
         } else if(ret == parser.getLexicalTokens().size()-1){
