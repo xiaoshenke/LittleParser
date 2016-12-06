@@ -1,41 +1,29 @@
 package wuxian.me.littleparser;
 
-import java.util.Set;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
+
+import static wuxian.me.littleparser.Token.*;
 
 /**
  * Created by wuxian on 1/12/2016.
  * 目前的匹配策略都是最长匹配 且没有回溯策略 没有error handling
+ * 参考文章: https://zhuanlan.zhihu.com/p/21830284
  **/
 class LittleParser {
 
-    static Set<Character> javaLetter;
-    static Set<Character> javaLetterOrDigit;
-    static Set<Character> bracket;
-    static Set<Character> terminal;
-    static Set<String> keywords;
-    static Set<String> primitives;
-
-    static int TOKEN_NONE_TYPE = -1;
-    static int TOKEN_JAVALETTER = 0;
-    static int TOKEN_JAVALETTERORDIGIT = 1;
-    static int TOKEN_BRACKET = 2;
-    static int TOKEN_TERMINAL = 3;
-    static int TOKEN_KEYWORDS = 4;
-    static int TOKEN_VARIABLE = 5;
-    static int TOKEN_PRIMITIVE = 6;
-
     List<Token> tokens = new ArrayList<Token>();
-
+    ASTNode root;//= new ASTNode();
     public LittleParser() {
-        ;
+
     }
 
     public boolean matchClassString(String content) {
+        root = new ASTNode();
+        //root.type = ASTNode.NODE_CLASS_DECLARATION;
+
         lexical(content);
-        return matchClassDeclaration(0) != -1;
+        return matchClassDeclaration(0, root) != -1;
     }
 
     //TODO: 能够表达这个内容的语法树？
@@ -129,8 +117,10 @@ class LittleParser {
         return index < tokens.size();
     }
 
+    //class A extends B implements C,D
+    //AST: type:'ClassDeclaration' name:'A' params:[{type:'extends' name:'B',params:?},{type:'implements',name:'C,D',params:?}]
     //classDeclaration:'class' Identifier typeParameters? ('extends' typeType)? ('implements' typeList)? classBody
-    private int matchClassDeclaration(int current) {
+    private int matchClassDeclaration(int current, ASTNode node) {
         //System.out.println("matchClassDeclaration index:" + current);
         if (!checkIndex(current)) {
             return -1;
@@ -139,16 +129,22 @@ class LittleParser {
         if (tokens.get(current).type != TOKEN_KEYWORDS || !((String) (tokens.get(current)).obj).equals("class")) {
             return -1;
         }
+        node.type = ASTNode.NODE_CLASS_DECLARATION;  //设置一下type
         current++;
 
-        int ret = matchIdentifier(current);
+        int ret = matchIdentifier(current, node);
         if (ret == -1) {
             return -1;
         }
 
         current = ret;
 
-        ret = matchTypeParameters(current + 1);
+        ASTNode typeParametersNode = new ASTNode();
+        ret = matchTypeParameters(current + 1, typeParametersNode);
+        if (ret != -1) {
+            current = ret;
+            node.subNodes.add(typeParametersNode); //添加子node if match success
+        }
         current = ret == -1 ? current : ret;
 
         int tmp = current;
@@ -158,7 +154,7 @@ class LittleParser {
 
         if (tokens.get(tmp + 1).type == TOKEN_KEYWORDS && ((String) (tokens.get(tmp + 1).obj)).equals("extends")) {
             tmp++;
-            ret = matchTypeType(tmp + 1);
+            ret = matchTypeType(tmp + 1, node);
             if (ret != -1) {
                 current = ret;
             }
@@ -171,7 +167,7 @@ class LittleParser {
 
         if (tokens.get(tmp + 1).type == TOKEN_KEYWORDS && ((String) (tokens.get(tmp + 1).obj)).equals("implements")) {
             tmp++;
-            ret = matchTypeList(tmp + 1);
+            ret = matchTypeList(tmp + 1, node);
             if (ret != -1) {
                 current = ret;
             }
@@ -189,7 +185,7 @@ class LittleParser {
     }
 
     //typeParameters:   '<' typeParameter (',' typeParameter)* '>'
-    private int matchTypeParameters(int current) {
+    private int matchTypeParameters(int current, ASTNode node) {
         //System.out.println("matchTypeParameters index:" + current);
         if (!checkIndex(current)) {
             return -1;
@@ -199,7 +195,7 @@ class LittleParser {
         }
 
         current++;
-        int ret = matchTypeParameter(current);
+        int ret = matchTypeParameter(current, node);
         if (ret == -1) {
             return -1;
         }
@@ -214,7 +210,7 @@ class LittleParser {
                 break;
             }
             tmp++;
-            ret = matchTypeParameter(tmp + 1);
+            ret = matchTypeParameter(tmp + 1, node);
             if (ret == -1) {
                 return -1;
             } else {
@@ -235,9 +231,9 @@ class LittleParser {
     }
 
     //typeParameter:   Identifier ('extends' typeBound)?
-    private int matchTypeParameter(int current) {
+    private int matchTypeParameter(int current, ASTNode node) {
         //System.out.println("matchTypeParameter index:" + current);
-        current = matchIdentifier(current);
+        current = matchIdentifier(current, node);
         if (current == -1) {
             return -1;
         }
@@ -249,7 +245,7 @@ class LittleParser {
 
         if (tokens.get(tmp + 1).type == TOKEN_KEYWORDS && ((String) (tokens.get(tmp + 1).obj)).equals("extends")) {
             tmp++;
-            int ret = matchTypeBound(tmp + 1);
+            int ret = matchTypeBound(tmp + 1, node);
             if (ret != -1) {
                 current = ret;
             }
@@ -259,13 +255,13 @@ class LittleParser {
     }
 
     //typeList:   typeType (',' typeType)*
-    private int matchTypeList(int current) {
+    private int matchTypeList(int current, ASTNode node) {
         //System.out.println("matchTypeList index:" + current);
         if (!checkIndex(current)) {
             return -1;
         }
 
-        current = matchTypeType(current);
+        current = matchTypeType(current, node);
         if (current == -1) {
             return -1;
         }
@@ -276,7 +272,7 @@ class LittleParser {
             }
             if (tokens.get(tmp + 1).type == TOKEN_TERMINAL && (char) (tokens.get(tmp + 1).obj) == ',') {
                 tmp++;
-                int ret = matchTypeType(tmp + 1);
+                int ret = matchTypeType(tmp + 1, node);
                 if (ret == -1) {
                     return -1;
                 } else {
@@ -302,9 +298,9 @@ class LittleParser {
     }
 
     //typeType:   classOrInterfaceType ('[' ']')* | primitiveType ('[' ']')*
-    private int matchTypeType(int current) {
+    private int matchTypeType(int current, ASTNode node) {
         //System.out.println("matchTypeType index:" + current);
-        int next = matchClassOrInterfaceType(current);
+        int next = matchClassOrInterfaceType(current, node);
         if (next == -1) { //匹配失败
             next = matchPrimitiveType(current);
         }
@@ -312,7 +308,7 @@ class LittleParser {
     }
 
     //classOrInterfaceType:Identifier typeArguments? ('.' Identifier typeArguments? )*
-    private int matchClassOrInterfaceType(int current) {
+    private int matchClassOrInterfaceType(int current, ASTNode node) {
         //System.out.println("matchClassOrInterfaceType index:" + current);
         if (!checkIndex(current)) {
             return -1;
@@ -320,7 +316,7 @@ class LittleParser {
         Token token = tokens.get(current);
         if (token.type == TOKEN_VARIABLE) {
 
-            int next = matchTypeArguments(current + 1);
+            int next = matchTypeArguments(current + 1, node);
             if (next != -1) {
                 current = next;
             }
@@ -334,12 +330,12 @@ class LittleParser {
                     break;
                 }
                 tmp++;
-                int ret = matchIdentifier(tmp + 1);
+                int ret = matchIdentifier(tmp + 1, node);
                 if (ret == -1) {
                     return -1;
                 }
                 tmp = ret;
-                ret = matchTypeArguments(tmp + 1);
+                ret = matchTypeArguments(tmp + 1, node);
                 if (ret != -1) {
                     tmp = ret;
                 }
@@ -354,14 +350,14 @@ class LittleParser {
     }
 
     //typeArguments:   '<' typeArgument (',' typeArgument)* '>' //java范型
-    private int matchTypeArguments(int current) {
+    private int matchTypeArguments(int current, ASTNode node) {
         //System.out.println("matchTypeArguments index:" + current);
         if (!checkIndex(current)) {
             return -1;
         }
         Token token = tokens.get(current);
         if (token.type == TOKEN_TERMINAL && (char) (token.obj) == '<') {
-            int ret = matchTypeArgument(current + 1);
+            int ret = matchTypeArgument(current + 1, node);
             if (ret == -1) {
                 return -1;
             }
@@ -375,7 +371,7 @@ class LittleParser {
                     break;
                 }
                 tmp++;
-                ret = matchTypeArgument(tmp + 1);
+                ret = matchTypeArgument(tmp + 1, node);
                 if (ret == -1) {
                     return -1;
                 }
@@ -398,8 +394,8 @@ class LittleParser {
     }
 
     //typeParameter:   Identifier ('extends' typeBound)?
-    private int matchTypeArgument(int current) {
-        current = matchIdentifier(current);
+    private int matchTypeArgument(int current, ASTNode node) {
+        current = matchIdentifier(current, node);
         if (current == -1) {
             return -1;
         }
@@ -409,7 +405,7 @@ class LittleParser {
         }
         if (tokens.get(tmp + 1).type == TOKEN_KEYWORDS && ((String) (tokens.get(tmp + 1).obj)).equals("extends")) {
             tmp++;
-            int ret = matchTypeBound(tmp + 1);
+            int ret = matchTypeBound(tmp + 1, node);
             if (ret == -1) {
                 return -1;
             } else {
@@ -422,9 +418,9 @@ class LittleParser {
     }
 
     //typeBound:   typeType ('&' typeType)*
-    private int matchTypeBound(int current) {
+    private int matchTypeBound(int current, ASTNode node) {
         //System.out.println("matchTypeBound index:" + current);
-        current = matchTypeType(current);
+        current = matchTypeType(current, node);
         if (current != -1) {
             int tmp = current;
             while (true) {
@@ -433,7 +429,7 @@ class LittleParser {
                 }
                 if (tokens.get(tmp + 1).type == TOKEN_TERMINAL && (char) (tokens.get(tmp + 1).obj) == '&') {
                     tmp++;
-                    int ret = matchTypeType(tmp + 1);
+                    int ret = matchTypeType(tmp + 1, node);
                     if (ret == -1) {
                         return -1;
                         //break;
@@ -453,119 +449,19 @@ class LittleParser {
 
     }
 
+    //AST: name:''
     //Identifier:   JavaLetter JavaLetterOrDigit*
-    private int matchIdentifier(int current) {
+    private int matchIdentifier(int current, ASTNode node) {
         //System.out.println("matchIdentifier index:" + current);
         if (!checkIndex(current)) {
             return -1;
         }
         if (tokens.get(current).type == TOKEN_VARIABLE) {
+            node.name = (String) tokens.get(current).obj;  //设置一下name
             return current;
         } else {
             return -1;
         }
-    }
-
-    static {
-        javaLetter = new HashSet<Character>();
-        javaLetter.add('a');
-        javaLetter.add('b');
-        javaLetter.add('c');
-        javaLetter.add('d');
-        javaLetter.add('e');
-        javaLetter.add('f');
-        javaLetter.add('g');
-        javaLetter.add('h');
-        javaLetter.add('i');
-        javaLetter.add('j');
-        javaLetter.add('k');
-        javaLetter.add('l');
-        javaLetter.add('m');
-        javaLetter.add('n');
-        javaLetter.add('o');
-        javaLetter.add('p');
-        javaLetter.add('q');
-        javaLetter.add('r');
-        javaLetter.add('s');
-        javaLetter.add('t');
-        javaLetter.add('u');
-        javaLetter.add('v');
-        javaLetter.add('w');
-        javaLetter.add('x');
-        javaLetter.add('y');
-        javaLetter.add('z');
-        javaLetter.add('A');
-        javaLetter.add('B');
-        javaLetter.add('C');
-        javaLetter.add('D');
-        javaLetter.add('E');
-        javaLetter.add('F');
-        javaLetter.add('G');
-        javaLetter.add('H');
-        javaLetter.add('I');
-        javaLetter.add('J');
-        javaLetter.add('K');
-        javaLetter.add('L');
-        javaLetter.add('M');
-        javaLetter.add('N');
-        javaLetter.add('O');
-        javaLetter.add('P');
-        javaLetter.add('Q');
-        javaLetter.add('R');
-        javaLetter.add('S');
-        javaLetter.add('T');
-        javaLetter.add('U');
-        javaLetter.add('V');
-        javaLetter.add('W');
-        javaLetter.add('X');
-        javaLetter.add('Y');
-        javaLetter.add('Z');
-        javaLetter.add('$');
-        javaLetter.add('_');
-
-        javaLetterOrDigit = new HashSet<Character>(javaLetter);
-        javaLetterOrDigit.add('0');
-        javaLetterOrDigit.add('1');
-        javaLetterOrDigit.add('2');
-        javaLetterOrDigit.add('3');
-        javaLetterOrDigit.add('4');
-        javaLetterOrDigit.add('5');
-        javaLetterOrDigit.add('6');
-        javaLetterOrDigit.add('7');
-        javaLetterOrDigit.add('8');
-        javaLetterOrDigit.add('9');
-
-        bracket = new HashSet<Character>();
-        bracket.add('\n');
-        bracket.add('\t');
-        bracket.add('\b');
-        bracket.add('\r');
-        bracket.add(' ');
-
-        terminal = new HashSet<Character>();
-        terminal.add('<');
-        terminal.add('>');
-        terminal.add(',');
-        terminal.add('.');
-        terminal.add('{');
-
-        keywords = new HashSet<String>();
-        keywords.add("class");
-        keywords.add("extends");
-        keywords.add("implements");
-        //keywords.add("int");
-
-        //primitiveType:'boolean'|'char'|'byte'|'short'|'int'|'long'|'float'|'double'
-        primitives = new HashSet<String>();
-        primitives.add("boolean");
-        primitives.add("char");
-        primitives.add("byte");
-        primitives.add("short");
-        primitives.add("int");
-        primitives.add("long");
-        primitives.add("float");
-        primitives.add("double");
-
     }
 
 
