@@ -156,10 +156,11 @@ class LittleParser {
             tmp++;
             ASTNode extendsNode = new ASTNode();
             extendsNode.type = ASTNode.NODE_EXTENDS_STATEMENT;
-
-            ret = matchTypeType(tmp + 1, extendsNode);
+            ASTNode type = new ASTNode();
+            ret = matchTypeType(tmp + 1, type);
             if (ret != -1) {
                 current = ret;
+                extendsNode.subNodes.add(type);
                 node.subNodes.add(extendsNode);
             }
         }
@@ -171,9 +172,14 @@ class LittleParser {
 
         if (tokens.get(tmp + 1).type == TOKEN_KEYWORDS && ((String) (tokens.get(tmp + 1).obj)).equals("implements")) {
             tmp++;
-            ret = matchTypeList(tmp + 1, node);
+            ASTNode implement = new ASTNode();
+            implement.type = ASTNode.NODE_IMPLEMENTS_STATEMENT;
+            ASTNode list = new ASTNode();
+            ret = matchTypeList(tmp + 1, list);
             if (ret != -1) {
                 current = ret;
+                implement.subNodes.add(list);
+                node.subNodes.add(implement);
             }
         }
 
@@ -273,49 +279,80 @@ class LittleParser {
         return current;
     }
 
-    //Todo
     //typeList:   typeType (',' typeType)*
     private int matchTypeList(int current, ASTNode node) {
         //System.out.println("matchTypeList index:" + current);
+        node.type = ASTNode.NODE_TYPE_TYPELIST;
         if (!checkIndex(current)) {
             return -1;
         }
 
-        current = matchTypeType(current, node);
+        ASTNode typeNode = new ASTNode();
+        current = matchTypeType(current, typeNode);
         if (current == -1) {
             return -1;
         }
+        node.subNodes.add(typeNode);
         int tmp = current;
         while (true) {
             if (!checkIndex(tmp + 1)) {
                 break;
             }
+            ASTNode commaNode = new ASTNode();
+            commaNode.type = ASTNode.NODE_TYPE_TYPELIST_COMMA;
             if (tokens.get(tmp + 1).type == TOKEN_TERMINAL && (char) (tokens.get(tmp + 1).obj) == ',') {
                 tmp++;
-                int ret = matchTypeType(tmp + 1, node);
+                ASTNode typenode = new ASTNode();
+                int ret = matchTypeType(tmp + 1, typenode);
                 if (ret == -1) {
                     return -1;
                 } else {
                     tmp = ret;
                     current = tmp;
+                    commaNode.subNodes.add(typenode);
+                    node.subNodes.add(commaNode);
                 }
             }
         }
         return current;
     }
 
-    //Todo
     //primitiveType:   'boolean'|'char'|'byte'|'short'|'int'|'long'|'float'|'double'
     private int matchPrimitiveType(int current, ASTNode node) {
         //System.out.println("matchPrimitiveType index:" + current);
+        node.type = ASTNode.NODE_TYPE_PRIMITIVE;
         if (!checkIndex(current)) {
             return -1;
         }
         if (tokens.get(current).type == TOKEN_PRIMITIVE) {
+            node.name = (String) tokens.get(current).obj;
             return current;
         } else {
             return -1;
         }
+    }
+
+    //[]
+    private int matchArrayType(int current, ASTNode node) {
+        node.type = ASTNode.NODE_TYPE_ARRAY;
+        if (!checkIndex(current)) {
+            return -1;
+        }
+        if (tokens.get(current).type != Token.TOKEN_TERMINAL || tokens.get(current).obj != '[') {
+            return -1;
+        }
+
+        current++;
+
+        if (!checkIndex(current)) {
+            return -1;
+        }
+        if (tokens.get(current).type != Token.TOKEN_TERMINAL || tokens.get(current).obj != ']') {
+            return -1;
+        }
+        node.name = "[]";
+
+        return current;
     }
 
 
@@ -325,14 +362,28 @@ class LittleParser {
         node.type = ASTNode.NODE_TYPE_TYPE;
         ASTNode subNode = new ASTNode();
         int next = matchClassOrInterfaceType(current, node);
-        if (next == -1) { //匹配失败
+        if (next != -1) { //匹配成功
             node.subNodes.add(subNode);
         } else {
             next = matchPrimitiveType(current, node);
             if (next != -1) {
                 node.subNodes.add(subNode);
+            } else {
+                return -1;
             }
         }
+        int tmp = next;
+        while (true) {
+            ASTNode array = new ASTNode();
+            int ret = matchArrayType(tmp + 1, array);
+            if (ret != -1) {
+                tmp = ret;
+                node.subNodes.add(array);
+            } else {
+                break;
+            }
+        }
+
         return next;
     }
 
@@ -385,19 +436,21 @@ class LittleParser {
         }
     }
 
-    //Todo
     //typeArguments:   '<' typeArgument (',' typeArgument)* '>' //java范型
     private int matchTypeArguments(int current, ASTNode node) {
         //System.out.println("matchTypeArguments index:" + current);
+        node.type = ASTNode.NODE_TYPE_TYPEARGUMENTS;
         if (!checkIndex(current)) {
             return -1;
         }
         Token token = tokens.get(current);
         if (token.type == TOKEN_TERMINAL && (char) (token.obj) == '<') {
+            ASTNode argNode = new ASTNode();
             int ret = matchTypeArgument(current + 1, node);
             if (ret == -1) {
                 return -1;
             }
+            node.subNodes.add(argNode);
             current = ret;
             int tmp = current;
             while (true) {
@@ -408,10 +461,15 @@ class LittleParser {
                     break;
                 }
                 tmp++;
+                ASTNode argmentComma = new ASTNode();
+                argmentComma.type = ASTNode.NODE_TYPE_TYPEARGUMENTS_COMMA;
+                ASTNode arg = new ASTNode();
                 ret = matchTypeArgument(tmp + 1, node);
                 if (ret == -1) {
                     return -1;
                 }
+                argmentComma.subNodes.add(arg);
+                node.subNodes.add(argmentComma);
                 tmp = ret;
                 current = tmp;
             }
@@ -430,10 +488,15 @@ class LittleParser {
         }
     }
 
-    //Todo
     //typeParameter:   Identifier ('extends' typeBound)?
     private int matchTypeArgument(int current, ASTNode node) {
+        node.type = ASTNode.NODE_TYPE_TYPEARGUMENT;
+
         current = matchIdentifier(current, node);
+
+        ASTNode extend = new ASTNode();
+        extend.type = ASTNode.NODE_TYPE_TYPEBOUND_EXTENDS;
+
         if (current == -1) {
             return -1;
         }
@@ -443,12 +506,15 @@ class LittleParser {
         }
         if (tokens.get(tmp + 1).type == TOKEN_KEYWORDS && ((String) (tokens.get(tmp + 1).obj)).equals("extends")) {
             tmp++;
+            ASTNode bound = new ASTNode();
             int ret = matchTypeBound(tmp + 1, node);
             if (ret == -1) {
                 return -1;
             } else {
                 tmp = ret;
                 current = tmp;
+                extend.subNodes.add(bound);
+                node.subNodes.add(extend);
             }
         }
 

@@ -18,11 +18,15 @@ public class ASTNode {
     public static final int NODE_TYPE_PARAMETERS_EXTENDS = 8;
     public static final int NODE_TYPE_TYPE = 9;
     public static final int NODE_TYPE_CLASSORINTERFACE = 10;
-    public static final int NODE_TYPE_ARGUMENTS = 11;
     public static final int NODE_TYPE_CLASSORINTERFACE_DOT = 12;
-
-    public static final String NAME_TYPE_PARAMETERS = "NAME_TYPE_PARAMETERS";
-
+    public static final int NODE_TYPE_PRIMITIVE = 13;
+    public static final int NODE_TYPE_TYPELIST = 14;
+    public static final int NODE_TYPE_TYPELIST_COMMA = 15;
+    public static final int NODE_TYPE_TYPEARGUMENTS = 16;
+    public static final int NODE_TYPE_TYPEARGUMENTS_COMMA = 17;
+    public static final int NODE_TYPE_TYPEARGUMENT = 18;
+    public static final int NODE_TYPE_TYPEBOUND_EXTENDS = 19;
+    public static final int NODE_TYPE_ARRAY = 20;
 
     public int type;
     public String name = "";
@@ -30,5 +34,64 @@ public class ASTNode {
 
     public ASTNode() {
         ;
+    }
+
+    private String post() {
+        String post = "";
+        switch (type) {
+            case NODE_TYPE_PARAMETERS:
+            case NODE_TYPE_TYPEARGUMENTS:
+                post = ">";
+                break;
+        }
+        return post;
+    }
+
+    private String pre() {
+        String pre = "";
+        switch (type) {
+            case NODE_CLASS_DECLARATION:
+                pre = "class " + name;
+                break;
+            case NODE_TYPE_PARAMETERS_EXTENDS:
+            case NODE_TYPE_TYPEBOUND_EXTENDS:
+            case NODE_EXTENDS_STATEMENT:
+                pre = " extends ";
+                break;
+            case NODE_TYPE_ARRAY:
+            case NODE_TYPE_PRIMITIVE:
+            case NODE_TYPE_TYPEARGUMENT:
+            case NODE_TYPE_CLASSORINTERFACE:
+                pre = name;
+                break;
+            case NODE_TYPE_CLASSORINTERFACE_DOT:
+                pre = ".";
+                break;
+            case NODE_TYPE_PARAMETERS:
+            case NODE_TYPE_TYPEARGUMENTS:
+                pre = "<";
+                break;
+            case NODE_IMPLEMENTS_STATEMENT:
+                pre = " implements ";
+                break;
+            case NODE_TYPE_TYPEARGUMENTS_COMMA:
+            case NODE_TYPE_TYPELIST_COMMA:
+                pre = " , ";
+                break;
+            case NODE_TYPE_TYPEBOUND_AND:
+                pre = "&";
+                break;
+        }
+        return pre;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder(pre());
+        for (ASTNode node : subNodes) {
+            b.append(node.toString());
+        }
+        b.append(post());
+        return b.toString();
     }
 }

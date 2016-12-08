@@ -106,6 +106,8 @@ public class Token {
         terminal.add(',');
         terminal.add('.');
         terminal.add('{');
+        terminal.add('[');
+        terminal.add(']');
 
         keywords = new HashSet<String>();
         keywords.add("class");
