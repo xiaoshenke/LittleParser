@@ -10,13 +10,17 @@ import static wuxian.me.littleparser.Token.*;
  * 目前的匹配策略都是最长匹配 且没有回溯策略 没有error handling
  * 参考文章: https://zhuanlan.zhihu.com/p/21830284
  **/
-class LittleParser {
+public class LittleParser {
 
     List<Token> tokens = new ArrayList<Token>();
     ASTNode root;//= new ASTNode();
 
     public LittleParser() {
 
+    }
+
+    public ASTNode getParsedASTNode() {
+        return root;
     }
 
     public boolean matchClassString(String content) {
@@ -338,7 +342,7 @@ class LittleParser {
         if (!checkIndex(current)) {
             return -1;
         }
-        if (tokens.get(current).type != Token.TOKEN_TERMINAL || tokens.get(current).obj != '[') {
+        if (tokens.get(current).type != Token.TOKEN_TERMINAL || (char) tokens.get(current).obj != '[') {
             return -1;
         }
 
@@ -347,7 +351,7 @@ class LittleParser {
         if (!checkIndex(current)) {
             return -1;
         }
-        if (tokens.get(current).type != Token.TOKEN_TERMINAL || tokens.get(current).obj != ']') {
+        if (tokens.get(current).type != Token.TOKEN_TERMINAL || (char) tokens.get(current).obj != ']') {
             return -1;
         }
         node.name = "[]";
