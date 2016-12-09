@@ -1,7 +1,8 @@
 package wuxian.me.littleparser;
-
 import java.util.List;
 import java.util.ArrayList;
+
+import wuxian.me.littleparser.astnode.ASTNode;
 
 import static wuxian.me.littleparser.Token.*;
 
@@ -13,7 +14,7 @@ import static wuxian.me.littleparser.Token.*;
 public class LittleParser {
 
     List<Token> tokens = new ArrayList<Token>();
-    ASTNode root;//= new ASTNode();
+    ASTNode root;
 
     public LittleParser() {
 
@@ -25,46 +26,9 @@ public class LittleParser {
 
     public boolean matchClassString(String content) {
         root = new ASTNode();
-        //root.type = ASTNode.NODE_CLASS_DECLARATION;
 
         lexical(content);
         return matchClassDeclaration(0, root) != -1;
-    }
-
-    //TODO: 构建语法树
-    //class A<> extends B<> implements C,D
-    public String getClassString() {
-        return null;
-    }
-
-    //TODO:
-    //A<>
-    public String getClassName() {
-        return null;
-    }
-
-    //TODO:
-    //A
-    public String getSimpleClassName() {
-        return null;
-    }
-
-    //TODO:
-    //B
-    public String getSimpleSuperClassName() {
-        return null;
-    }
-
-    //TODO:
-    //B<>
-    public String getSuperClassName() {
-        return null;
-    }
-
-    //TODO:
-    //C,D
-    public String getInterfacesName() {
-        return null;
     }
 
     private List<Token> getLexicalTokens() {
@@ -114,7 +78,6 @@ public class LittleParser {
 
         for (int i = 0; i < tokens.size(); i++) {
             Token token = tokens.get(i);
-            //System.out.println(String.format("token type: %d,index: %d,content: %s ", token.type, i, token.obj.toString()));
         }
     }
 
@@ -126,7 +89,6 @@ public class LittleParser {
     //AST: type:'ClassDeclaration' name:'A' params:[{type:'extends' name:'B',params:?},{type:'implements',name:'C,D',params:?}]
     //classDeclaration:'class' Identifier typeParameters? ('extends' typeType)? ('implements' typeList)? classBody
     private int matchClassDeclaration(int current, ASTNode node) {
-        //System.out.println("matchClassDeclaration index:" + current);
         if (!checkIndex(current)) {
             return -1;
         }
@@ -134,7 +96,7 @@ public class LittleParser {
         if (tokens.get(current).type != TOKEN_KEYWORDS || !((String) (tokens.get(current)).obj).equals("class")) {
             return -1;
         }
-        node.type = ASTNode.NODE_CLASS_DECLARATION;  //设置一下type
+        node.type = ASTNode.NODE_CLASS_DECLARATION;
         current++;
 
         int ret = matchIdentifier(current, node);
@@ -148,7 +110,7 @@ public class LittleParser {
         ret = matchTypeParameters(current + 1, typeParametersNode);
         if (ret != -1) {
             current = ret;
-            node.subNodes.add(typeParametersNode); //添加子node if match success
+            node.subNodes.add(typeParametersNode);
         }
 
         int tmp = current;
@@ -201,9 +163,7 @@ public class LittleParser {
     //AST: type:'match type parameters'
     //typeParameters:   '<' typeParameter (',' typeParameter)* '>'
     private int matchTypeParameters(int current, ASTNode node) {
-        //System.out.println("matchTypeParameters index:" + current);
         node.type = ASTNode.NODE_TYPE_PARAMETERS;
-        node.name = "";      //name暂时自动置空
         if (!checkIndex(current)) {
             return -1;
         }
@@ -254,7 +214,6 @@ public class LittleParser {
 
     //typeParameter:   Identifier ('extends' typeBound)?
     private int matchTypeParameter(int current, ASTNode node) {
-        //System.out.println("matchTypeParameter index:" + current);
         node.type = ASTNode.NODE_TYPE_PARAMETER;
         current = matchIdentifier(current, node);
         if (current == -1) {
@@ -285,7 +244,6 @@ public class LittleParser {
 
     //typeList:   typeType (',' typeType)*
     private int matchTypeList(int current, ASTNode node) {
-        //System.out.println("matchTypeList index:" + current);
         node.type = ASTNode.NODE_TYPE_TYPELIST;
         if (!checkIndex(current)) {
             return -1;
@@ -323,7 +281,6 @@ public class LittleParser {
 
     //primitiveType:   'boolean'|'char'|'byte'|'short'|'int'|'long'|'float'|'double'
     private int matchPrimitiveType(int current, ASTNode node) {
-        //System.out.println("matchPrimitiveType index:" + current);
         node.type = ASTNode.NODE_TYPE_PRIMITIVE;
         if (!checkIndex(current)) {
             return -1;
@@ -362,11 +319,10 @@ public class LittleParser {
 
     //typeType:   classOrInterfaceType ('[' ']')* | primitiveType ('[' ']')*
     private int matchTypeType(int current, ASTNode node) {
-        //System.out.println("matchTypeType index:" + current);
         node.type = ASTNode.NODE_TYPE_TYPE;
         ASTNode subNode = new ASTNode();
         int next = matchClassOrInterfaceType(current, node);
-        if (next != -1) { //匹配成功
+        if (next != -1) {
             node.subNodes.add(subNode);
         } else {
             next = matchPrimitiveType(current, node);
@@ -393,7 +349,6 @@ public class LittleParser {
 
     //classOrInterfaceType:Identifier typeArguments? ('.' Identifier typeArguments? )*
     private int matchClassOrInterfaceType(int current, ASTNode node) {
-        //System.out.println("matchClassOrInterfaceType index:" + current);
         node.type = ASTNode.NODE_TYPE_CLASSORINTERFACE;
         if (!checkIndex(current)) {
             return -1;
@@ -430,7 +385,7 @@ public class LittleParser {
                     dotNode.subNodes.add(argumentNode);
                     node.subNodes.add(dotNode);
                 }
-                current = tmp; //继续下一个loop匹配
+                current = tmp;
 
             }
 
@@ -442,7 +397,6 @@ public class LittleParser {
 
     //typeArguments:   '<' typeArgument (',' typeArgument)* '>' //java范型
     private int matchTypeArguments(int current, ASTNode node) {
-        //System.out.println("matchTypeArguments index:" + current);
         node.type = ASTNode.NODE_TYPE_TYPEARGUMENTS;
         if (!checkIndex(current)) {
             return -1;
@@ -527,7 +481,6 @@ public class LittleParser {
 
     //typeBound:   typeType ('&' typeType)*
     private int matchTypeBound(int current, ASTNode node) {
-        //System.out.println("matchTypeBound index:" + current);
         node.type = ASTNode.NODE_TYPE_TYPEBOUND;
         ASTNode typetypeNode = new ASTNode();
         current = matchTypeType(current, typetypeNode);
@@ -546,12 +499,11 @@ public class LittleParser {
                     int ret = matchTypeType(tmp + 1, typeNode);
                     if (ret == -1) {
                         return -1;
-                        //break;
                     } else {
                         tmp = ret;
                         current = tmp;
-                        boundAndNode.subNodes.add(typeNode);  //...
-                        node.subNodes.add(boundAndNode);      //...
+                        boundAndNode.subNodes.add(typeNode);
+                        node.subNodes.add(boundAndNode);
                     }
                 } else {
                     break;
@@ -568,37 +520,15 @@ public class LittleParser {
     //AST: name:''
     //Identifier:   JavaLetter JavaLetterOrDigit*
     private int matchIdentifier(int current, ASTNode node) {
-        //System.out.println("matchIdentifier index:" + current);
         if (!checkIndex(current)) {
             return -1;
         }
         if (tokens.get(current).type == TOKEN_VARIABLE) {
-            node.name = (String) tokens.get(current).obj;  //设置一下name
+            node.name = (String) tokens.get(current).obj;
             return current;
         } else {
             return -1;
         }
     }
-
-
-    /*
-    public static void main(String[] args) {
-        String content = "int,Some_Class<T extends Other_class>";
-        content = "A<D,B extends C<D>>";
-        content = "class A<Integer,D extends E> extends B<Integer,D> {";
-        LittleParser parser = new LittleParser();
-        parser.lexical(content);
-
-        //System.out.println("begin match: " + content);
-        int ret = parser.matchClassDeclaration(0);
-        if (ret == -1) {
-            //System.out.println("match fail");
-        } else if (ret == parser.getLexicalTokens().size() - 1) {
-            //System.out.println("match success");
-        }
-
-        //System.out.println("match finish");
-    }
-    */
 
 }

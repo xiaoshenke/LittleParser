@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import wuxian.me.littleparser.ASTNode;
+import wuxian.me.littleparser.astnode.ASTNode;
 import wuxian.me.littleparser.LittleParser;
 import wuxian.me.littleparser.Visitor;
 

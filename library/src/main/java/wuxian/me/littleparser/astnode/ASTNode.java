@@ -1,4 +1,4 @@
-package wuxian.me.littleparser;
+package wuxian.me.littleparser.astnode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class ASTNode {
         ;
     }
 
-    private String post() {
+    protected String post() {
         String post = "";
         switch (type) {
             case NODE_TYPE_PARAMETERS:
@@ -47,7 +47,7 @@ public class ASTNode {
         return post;
     }
 
-    private String pre() {
+    protected String pre() {
         String pre = "";
         switch (type) {
             case NODE_CLASS_DECLARATION:
@@ -93,5 +93,10 @@ public class ASTNode {
         }
         b.append(post());
         return b.toString();
+    }
+
+
+    public String printWholeNode() {
+        return toString();
     }
 }
