@@ -6,7 +6,9 @@ package wuxian.me.littleparser.astnode;
 
 public class ClassExtendsNode extends ASTNode {
 
-    public ASTNode getClassNode() {
-        return null;
+    public ClassExtendsNode() {
+        type = NODE_EXTENDS_STATEMENT;
     }
+
+
 }

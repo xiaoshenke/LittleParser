@@ -1,15 +1,20 @@
 package wuxian.me.littleparser.astnode;
 
-import java.util.List;
-
 /**
  * Created by wuxian on 9/12/2016.
  */
 
 public class ClassImplementsNode extends ASTNode {
 
-    public List<ASTNode> getInterfacesNodes() {
-        return null;
+    public ClassImplementsNode() {
+        type = NODE_IMPLEMENTS_STATEMENT;
     }
 
+    public TypeListNode getTypelistNode() {
+        if (subNodes.size() == 0) {
+            return null;
+        }
+
+        return (TypeListNode) subNodes.get(0);
+    }
 }

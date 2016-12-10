@@ -2,30 +2,38 @@ package wuxian.me.littleparser.astnode;
 
 /**
  * Created by wuxian on 9/12/2016.
- * TODO: a better version?
  */
 
 public class ClassDeclareNode extends ASTNode {
 
-    //class A extends B implements C
-    @Override
-    public String printWholeNode() {
-        return super.printWholeNode();
+    public ClassDeclareNode() {
+        type = NODE_CLASS_DECLARATION;
     }
 
-    public String printClass() {
-        return "";
+    public boolean isTemplate() {
+        for (ASTNode node : subNodes) {
+            if (node instanceof TypeParametersNode) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public String printSimpleClass() {
-        return "";
+    public ClassExtendsNode getExtendsNode() {
+        for (ASTNode node : subNodes) {
+            if (node instanceof ClassExtendsNode) {
+                return (ClassExtendsNode) node;
+            }
+        }
+        return null;
     }
 
-    public String printSuperClass() {
-        return "";
-    }
-
-    public String printSimpleSuperClass() {
-        return "";
+    public ClassImplementsNode getImplementsNode() {
+        for (ASTNode node : subNodes) {
+            if (node instanceof ClassImplementsNode) {
+                return (ClassImplementsNode) node;
+            }
+        }
+        return null;
     }
 }
