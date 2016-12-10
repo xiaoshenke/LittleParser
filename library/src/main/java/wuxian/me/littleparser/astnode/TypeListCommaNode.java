@@ -16,4 +16,20 @@ public class TypeListCommaNode extends ASTNode {
         }
         return (TypeNode) subNodes.get(0);
     }
+
+    public String getName() {
+        TypeNode node = getTypeNode();
+        if (node == null) {
+            return null;
+        }
+        return node.getName();
+    }
+
+    public String getNameLong() {
+        TypeNode node = getTypeNode();
+        if (node == null) {
+            return null;
+        }
+        return node.getNameLong();
+    }
 }

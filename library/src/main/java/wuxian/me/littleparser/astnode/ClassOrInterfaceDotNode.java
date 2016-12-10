@@ -17,4 +17,20 @@ public class ClassOrInterfaceDotNode extends ASTNode {
         }
         return null;
     }
+
+    private boolean hasTypeArguments() {
+        return getTypeArgumentsNode() != null;
+    }
+
+    public String getName() {
+        return "." + name;
+    }
+
+
+    public String getNameLong() {
+        if (hasTypeArguments()) {
+            return getName() + getTypeArgumentsNode().printWholeNode();
+        }
+        return getName();
+    }
 }

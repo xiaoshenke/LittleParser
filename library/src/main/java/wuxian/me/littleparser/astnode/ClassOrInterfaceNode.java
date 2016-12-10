@@ -30,4 +30,39 @@ public class ClassOrInterfaceNode extends ASTNode {
         }
         return null;
     }
+
+    private boolean hasTypeArguments() {
+        return getTypeArgumentsNode() != null;
+    }
+
+    public String getName() {
+        String shortname = name;
+
+        for (ClassOrInterfaceDotNode dotNode : getClassOrInterfaceDotNodes()) {
+            String dot = dotNode.getName();
+            if (dot != null) {
+                shortname += dot;
+            }
+        }
+
+        return shortname;
+    }
+
+
+    public String getNameLong() {
+        String shortname = name;
+
+        if (hasTypeArguments()) {
+            shortname += getTypeArgumentsNode().printWholeNode();
+        }
+
+        for (ClassOrInterfaceDotNode dotNode : getClassOrInterfaceDotNodes()) {
+            String dot = dotNode.getNameLong();
+            if (dot != null) {
+                shortname += dot;
+            }
+        }
+
+        return shortname;
+    }
 }

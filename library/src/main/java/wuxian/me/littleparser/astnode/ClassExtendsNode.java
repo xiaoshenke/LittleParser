@@ -10,5 +10,22 @@ public class ClassExtendsNode extends ASTNode {
         type = NODE_EXTENDS_STATEMENT;
     }
 
+    public TypeNode getTypeNode() {
+        if (subNodes.size() == 0) {
+            return null;
+        }
+        return (TypeNode) subNodes.get(0);
+    }
 
+    private boolean hasTypeNode() {
+        return getTypeNode() != null;
+    }
+
+    public String getClassName() {
+        return hasTypeNode() ? getTypeNode().getName() : null;
+    }
+
+    public String getClassNameLong() {
+        return hasTypeNode() ? getTypeNode().getNameLong() : null;
+    }
 }

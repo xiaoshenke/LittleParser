@@ -3,9 +3,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 import wuxian.me.littleparser.astnode.ASTNode;
+import wuxian.me.littleparser.astnode.ArrayNode;
 import wuxian.me.littleparser.astnode.ClassDeclareNode;
 import wuxian.me.littleparser.astnode.ClassExtendsNode;
 import wuxian.me.littleparser.astnode.ClassImplementsNode;
+import wuxian.me.littleparser.astnode.ClassOrInterfaceDotNode;
+import wuxian.me.littleparser.astnode.ClassOrInterfaceNode;
 import wuxian.me.littleparser.astnode.PrimitiveNode;
 import wuxian.me.littleparser.astnode.TypeArgumentsNode;
 import wuxian.me.littleparser.astnode.TypeListCommaNode;
@@ -115,7 +118,7 @@ public class LittleParser {
 
         current = ret;
 
-        ASTNode typeParametersNode;//= new ASTNode();
+        ASTNode typeParametersNode;
         typeParametersNode = new TypeParametersNode();
         ret = matchTypeParameters(current + 1, typeParametersNode);
         if (ret != -1) {
@@ -132,7 +135,7 @@ public class LittleParser {
             tmp++;
             ASTNode extendsNode;
             extendsNode = new ClassExtendsNode();
-            ASTNode type;//= new ASTNode();
+            ASTNode type;
             type = new TypeNode();
             ret = matchTypeType(tmp + 1, type);
             if (ret != -1) {
@@ -310,7 +313,6 @@ public class LittleParser {
 
     //[]
     private int matchArrayType(int current, ASTNode node) {
-        node.type = ASTNode.NODE_TYPE_ARRAY;
         if (!checkIndex(current)) {
             return -1;
         }
@@ -334,7 +336,8 @@ public class LittleParser {
 
     //typeType:   classOrInterfaceType ('[' ']')* | primitiveType ('[' ']')*
     private int matchTypeType(int current, ASTNode node) {
-        ASTNode subNode = new ASTNode();
+        ASTNode subNode;
+        subNode = new ClassOrInterfaceNode();
         int next = matchClassOrInterfaceType(current, subNode);
         if (next != -1) {
             node.subNodes.add(subNode);
@@ -349,7 +352,8 @@ public class LittleParser {
         }
         int tmp = next;
         while (true) {
-            ASTNode array = new ASTNode();
+            ASTNode array;
+            array = new ArrayNode();
             int ret = matchArrayType(tmp + 1, array);
             if (ret != -1) {
                 tmp = ret;
@@ -365,7 +369,6 @@ public class LittleParser {
     //A<T>.B<V> --> inner class...
     //classOrInterfaceType:Identifier typeArguments? ('.' Identifier typeArguments? )*
     private int matchClassOrInterfaceType(int current, ASTNode node) {
-        node.type = ASTNode.NODE_TYPE_CLASSORINTERFACE;
         if (!checkIndex(current)) {
             return -1;
         }
@@ -384,8 +387,8 @@ public class LittleParser {
                 if (!checkIndex(tmp + 1)) {
                     break;
                 }
-                ASTNode dotNode = new ASTNode();
-                dotNode.type = ASTNode.NODE_TYPE_CLASSORINTERFACE_DOT; //.Identifier typeArguments
+                ASTNode dotNode;
+                dotNode = new ClassOrInterfaceDotNode();//.Identifier typeArguments
                 if (tokens.get(tmp + 1).type != TOKEN_TERMINAL || (char) (tokens.get(tmp + 1).obj) != '.') {
                     break;
                 }

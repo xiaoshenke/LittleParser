@@ -31,4 +31,45 @@ public class TypeListNode extends ASTNode {
         }
         return nodes;
     }
+
+    public List<String> getNames() {
+        TypeNode node = getTypeNode();
+        if (node == null) {
+            return null;
+        }
+
+        List<String> names = new ArrayList<>();
+        names.add(node.getName());
+
+        List<TypeListCommaNode> commaNodes = getTypelistcommaNodes();
+        for (TypeListCommaNode commaNode : commaNodes) {
+            String name = commaNode.getName();
+            if (name != null) {
+                names.add(name);
+            }
+        }
+
+        return names;
+    }
+
+
+    public List<String> getNamesLong() {
+        TypeNode node = getTypeNode();
+        if (node == null) {
+            return null;
+        }
+
+        List<String> names = new ArrayList<>();
+        names.add(node.getNameLong());
+
+        List<TypeListCommaNode> commaNodes = getTypelistcommaNodes();
+        for (TypeListCommaNode commaNode : commaNodes) {
+            String name = commaNode.getNameLong();
+            if (name != null) {
+                names.add(name);
+            }
+        }
+
+        return names;
+    }
 }
