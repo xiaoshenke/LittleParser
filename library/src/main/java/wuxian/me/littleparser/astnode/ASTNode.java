@@ -65,7 +65,7 @@ public class ASTNode {
                 pre = name;
                 break;
             case NODE_TYPE_CLASSORINTERFACE_DOT:
-                pre = ".";
+                pre = "." + name;
                 break;
             case NODE_TYPE_PARAMETERS:
             case NODE_TYPE_TYPEARGUMENTS:

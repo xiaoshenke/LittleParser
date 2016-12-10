@@ -29,7 +29,7 @@ public class ClassImplementsNode extends ASTNode {
         if (!hasTypeListNode()) {
             return null;
         }
-        return getTypelistNode().getNames();
+        return getTypelistNode().getNamesLong();
     }
 
 
@@ -37,6 +37,6 @@ public class ClassImplementsNode extends ASTNode {
         if (!hasTypeListNode()) {
             return null;
         }
-        return getTypelistNode().getNamesLong();
+        return getTypelistNode().getNames();
     }
 }

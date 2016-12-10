@@ -289,6 +289,8 @@ public class LittleParser {
                     commaNode.subNodes.add(typenode);
                     node.subNodes.add(commaNode);
                 }
+            } else {
+                break;
             }
         }
         return current;
@@ -400,6 +402,8 @@ public class LittleParser {
                     tmp = ret;
                     dotNode.subNodes.add(argumentNode);
                     node.subNodes.add(dotNode);
+                } else {
+                    node.subNodes.add(dotNode);
                 }
                 current = tmp;
 
@@ -419,7 +423,7 @@ public class LittleParser {
         Token token = tokens.get(current);
         if (token.type == TOKEN_TERMINAL && (char) (token.obj) == '<') {
             ASTNode argNode = new ASTNode();
-            int ret = matchTypeArgument(current + 1, node);
+            int ret = matchTypeArgument(current + 1, argNode);
             if (ret == -1) {
                 return -1;
             }

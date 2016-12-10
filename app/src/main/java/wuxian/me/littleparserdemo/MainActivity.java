@@ -6,9 +6,12 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.List;
+
 import wuxian.me.littleparser.astnode.ASTNode;
 import wuxian.me.littleparser.LittleParser;
 import wuxian.me.littleparser.Visitor;
+import wuxian.me.littleparser.astnode.ClassDeclareNode;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,9 +29,29 @@ public class MainActivity extends AppCompatActivity {
 
                 if (success) {
                     Visitor visitor = new Visitor();
-                    ASTNode classNode = visitor.visitFirstNode(parser.getParsedASTNode(), ASTNode.NODE_EXTENDS_STATEMENT);
+                    ASTNode classNode = visitor.visitFirstNode(parser.getParsedASTNode(), ASTNode.NODE_CLASS_DECLARATION);
                     if (classNode != null) {
-                        ((TextView) findViewById(R.id.tv_answer)).setText("success: " + classNode.toString());
+                        String text = "success,whole node: " + classNode.printWholeNode();
+
+                        if (classNode instanceof ClassDeclareNode) {
+                            text += "\n and it is a class declare node,";
+                            ClassDeclareNode declareNode = (ClassDeclareNode) classNode;
+                            if (declareNode.hasSuperClass()) {
+                                text += "\n super class is " + declareNode.getSuperClassNameLong();
+                            }
+                            if (declareNode.hasInterfaces()) {
+                                List<String> interfaces = declareNode.getInterfacesNameLong();
+                                text += "\n interfaces are:";
+                                for (int i = 0; i < interfaces.size(); i++) {
+                                    if (i != 0) {
+                                        text += ", ";
+                                    }
+                                    text += interfaces.get(i);
+                                }
+                            }
+                        }
+
+                        ((TextView) findViewById(R.id.tv_answer)).setText(text);
                     } else {
                         ((TextView) findViewById(R.id.tv_answer)).setText("parse success,but print string error");
                     }

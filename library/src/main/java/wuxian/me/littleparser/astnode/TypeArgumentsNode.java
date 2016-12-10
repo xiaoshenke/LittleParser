@@ -10,4 +10,9 @@ public class TypeArgumentsNode extends ASTNode {
     public TypeArgumentsNode() {
         type = NODE_TYPE_TYPEARGUMENTS;
     }
+
+    @Override
+    public String printWholeNode() {
+        return super.printWholeNode();
+    }
 }
