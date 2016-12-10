@@ -97,8 +97,6 @@ public class LittleParser {
         return index < tokens.size();
     }
 
-    //class A extends B implements C,D
-    //AST: type:'ClassDeclaration' name:'A' params:[{type:'extends' name:'B',params:?},{type:'implements',name:'C,D',params:?}]
     //classDeclaration:'class' Identifier typeParameters? ('extends' typeType)? ('implements' typeList)? classBody
     private int matchClassDeclaration(int current, ASTNode node) {
         if (!checkIndex(current)) {
@@ -108,7 +106,6 @@ public class LittleParser {
         if (tokens.get(current).type != TOKEN_KEYWORDS || !((String) (tokens.get(current)).obj).equals("class")) {
             return -1;
         }
-
         current++;
 
         int ret = matchIdentifier(current, node);
@@ -176,7 +173,6 @@ public class LittleParser {
         return current;
     }
 
-    //AST: type:'match type parameters'
     //typeParameters:   '<' typeParameter (',' typeParameter)* '>'
     private int matchTypeParameters(int current, ASTNode node) {
         node.type = ASTNode.NODE_TYPE_PARAMETERS;
@@ -319,7 +315,6 @@ public class LittleParser {
         if (tokens.get(current).type != Token.TOKEN_TERMINAL || (char) tokens.get(current).obj != '[') {
             return -1;
         }
-
         current++;
 
         if (!checkIndex(current)) {
@@ -374,7 +369,7 @@ public class LittleParser {
         }
         int ret = matchIdentifier(current, node);
         if (ret != -1) {
-            ASTNode typeArgumentsNode;//= new ASTNode();
+            ASTNode typeArgumentsNode;
             typeArgumentsNode = new TypeArgumentsNode();
             int next = matchTypeArguments(current + 1, typeArgumentsNode);
             if (next != -1) {
@@ -418,7 +413,6 @@ public class LittleParser {
 
     //typeArguments:   '<' typeArgument (',' typeArgument)* '>' //java范型
     private int matchTypeArguments(int current, ASTNode node) {
-        //node.type = ASTNode.NODE_TYPE_TYPEARGUMENTS;
         if (!checkIndex(current)) {
             return -1;
         }
@@ -503,7 +497,7 @@ public class LittleParser {
     //typeBound:   typeType ('&' typeType)*
     private int matchTypeBound(int current, ASTNode node) {
         node.type = ASTNode.NODE_TYPE_TYPEBOUND;
-        ASTNode typetypeNode;//= new ASTNode();
+        ASTNode typetypeNode;
         typetypeNode = new TypeNode();
         current = matchTypeType(current, typetypeNode);
         if (current != -1) {
@@ -517,7 +511,7 @@ public class LittleParser {
                     tmp++;
                     ASTNode boundAndNode = new ASTNode();
                     boundAndNode.type = ASTNode.NODE_TYPE_TYPEBOUND_AND;
-                    ASTNode typeNode;//= new ASTNode();
+                    ASTNode typeNode;
                     typeNode = new TypeNode();
                     int ret = matchTypeType(tmp + 1, typeNode);
                     if (ret == -1) {
@@ -540,7 +534,6 @@ public class LittleParser {
 
     }
 
-    //AST: name:''
     //Identifier:   JavaLetter JavaLetterOrDigit*
     private int matchIdentifier(int current, ASTNode node) {
         if (!checkIndex(current)) {

@@ -4,6 +4,8 @@ import java.util.List;
 
 /**
  * Created by wuxian on 9/12/2016.
+ *
+ * grammer --> 'implements' typeList
  */
 
 public class ClassImplementsNode extends ASTNode {

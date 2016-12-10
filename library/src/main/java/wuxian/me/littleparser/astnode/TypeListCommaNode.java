@@ -2,7 +2,8 @@ package wuxian.me.littleparser.astnode;
 
 /**
  * Created by wuxian on 10/12/2016.
- * ',' typeType
+ *
+ * grammer --> ',' typeType
  */
 
 public class TypeListCommaNode extends ASTNode {

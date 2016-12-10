@@ -5,6 +5,8 @@ import java.util.List;
 
 /**
  * Created by wuxian on 10/12/2016.
+ *
+ * grammer --> classOrInterfaceType:Identifier typeArguments? ('.' Identifier typeArguments? )*
  */
 
 public class ClassOrInterfaceNode extends ASTNode {

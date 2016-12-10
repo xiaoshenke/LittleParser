@@ -2,6 +2,8 @@ package wuxian.me.littleparser.astnode;
 
 /**
  * Created by wuxian on 9/12/2016.
+ *
+ * grammer --> 'extends' typeType
  */
 
 public class ClassExtendsNode extends ASTNode {

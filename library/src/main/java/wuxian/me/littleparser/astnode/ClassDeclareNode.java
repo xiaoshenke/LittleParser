@@ -4,7 +4,9 @@ import java.util.List;
 
 /**
  * Created by wuxian on 9/12/2016.
+ * grammer --> classDeclaration:'class' Identifier typeParameters? ('extends' typeType)? ('implements' typeList)? classBody
  *
+ * class A extends B implements C,D
  */
 
 public class ClassDeclareNode extends ASTNode {

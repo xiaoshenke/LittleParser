@@ -5,6 +5,8 @@ import java.util.List;
 
 /**
  * Created by wuxian on 10/12/2016.
+ *
+ * grammer --> typeType:classOrInterfaceType ('[' ']')* | primitiveType ('[' ']')*
  */
 
 public class TypeNode extends ASTNode {

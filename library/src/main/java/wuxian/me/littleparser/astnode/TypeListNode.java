@@ -6,6 +6,8 @@ import java.util.List;
 
 /**
  * Created by wuxian on 10/12/2016.
+ *
+ * grammer --> typeList:typeType (',' typeType)*
  */
 
 public class TypeListNode extends ASTNode {
