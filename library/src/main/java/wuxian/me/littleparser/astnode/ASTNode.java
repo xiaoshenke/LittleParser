@@ -61,6 +61,7 @@ public class ASTNode {
             case NODE_TYPE_ARRAY:
             case NODE_TYPE_PRIMITIVE:
             case NODE_TYPE_TYPEARGUMENT:
+            case NODE_TYPE_PARAMETER:
             case NODE_TYPE_CLASSORINTERFACE:
                 pre = name;
                 break;
@@ -79,7 +80,7 @@ public class ASTNode {
                 pre = " , ";
                 break;
             case NODE_TYPE_TYPEBOUND_AND:
-                pre = "&";
+                pre = " & ";
                 break;
         }
         return pre;

@@ -34,8 +34,9 @@ public class MainActivity extends AppCompatActivity {
                         String text = "success,whole node: " + classNode.printWholeNode();
 
                         if (classNode instanceof ClassDeclareNode) {
-                            text += "\n and it is a class declare node,";
                             ClassDeclareNode declareNode = (ClassDeclareNode) classNode;
+                            text += "\n and it is a class declare node: " + declareNode.getClassNameLong();
+
                             if (declareNode.hasSuperClass()) {
                                 text += "\n super class is " + declareNode.getSuperClassNameLong();
                             }
