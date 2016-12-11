@@ -43,10 +43,6 @@ public class LittleParser {
         return matchClassDeclaration(0, root) != -1;
     }
 
-    private List<Token> getLexicalTokens() {
-        return tokens;
-    }
-
     private void lexical(String content) {
         tokens.clear();
         char lookahead;
@@ -88,21 +84,17 @@ public class LittleParser {
             }
         }
 
-        for (int i = 0; i < tokens.size(); i++) {
-            Token token = tokens.get(i);
-        }
     }
 
     private boolean checkIndex(int index) {
         return index < tokens.size();
     }
 
-    //classDeclaration:'class' Identifier typeParameters? ('extends' typeType)? ('implements' typeList)? classBody
+    //classDeclaration:'class' Identifier typeParameters? ('extends' typeType)? ('implements' typeList)? #classBody#这里的classbody就不要了
     private int matchClassDeclaration(int current, ASTNode node) {
         if (!checkIndex(current)) {
             return -1;
         }
-
         if (tokens.get(current).type != TOKEN_KEYWORDS || !((String) (tokens.get(current)).obj).equals("class")) {
             return -1;
         }
@@ -125,7 +117,7 @@ public class LittleParser {
 
         int tmp = current;
         if (!checkIndex(tmp + 1)) {
-            return -1;
+            return current;
         }
 
         if (tokens.get(tmp + 1).type == TOKEN_KEYWORDS && ((String) (tokens.get(tmp + 1).obj)).equals("extends")) {
@@ -144,7 +136,7 @@ public class LittleParser {
 
         tmp = current;
         if (!checkIndex(tmp + 1)) {
-            return -1;
+            return current;
         }
 
         if (tokens.get(tmp + 1).type == TOKEN_KEYWORDS && ((String) (tokens.get(tmp + 1).obj)).equals("implements")) {
@@ -162,14 +154,15 @@ public class LittleParser {
             }
         }
 
-        if (!checkIndex(current + 1)) {
-            return -1;
-        }
 
+        if (!checkIndex(current + 1)) {
+            return current;
+        }
         if (tokens.get(current + 1).type == TOKEN_TERMINAL && (char) (tokens.get(current + 1).obj) == '{') {
             current++;
+        } else {  //一个class declare string一定是以'{'结尾,要么就是后面没有字符串了
+            return -1;
         }
-
         return current;
     }
 
@@ -223,7 +216,6 @@ public class LittleParser {
         return current;
     }
 
-
     //typeParameter:   Identifier ('extends' typeBound)?
     private int matchTypeParameter(int current, ASTNode node) {
         node.type = ASTNode.NODE_TYPE_PARAMETER;
@@ -256,7 +248,6 @@ public class LittleParser {
 
     //typeList:   typeType (',' typeType)*
     private int matchTypeList(int current, ASTNode node) {
-
         if (!checkIndex(current)) {
             return -1;
         }
@@ -329,7 +320,6 @@ public class LittleParser {
 
         return current;
     }
-
 
     //typeType:   classOrInterfaceType ('[' ']')* | primitiveType ('[' ']')*
     private int matchTypeType(int current, ASTNode node) {
@@ -459,7 +449,6 @@ public class LittleParser {
             current++;
 
             return current;
-
         } else {
             return -1;
         }
@@ -468,7 +457,6 @@ public class LittleParser {
     //typeParameter:   Identifier ('extends' typeBound)?
     private int matchTypeArgument(int current, ASTNode node) {
         node.type = ASTNode.NODE_TYPE_TYPEARGUMENT;
-
         current = matchIdentifier(current, node);
 
         ASTNode extend = new ASTNode();
@@ -532,10 +520,8 @@ public class LittleParser {
             }
             return current;
 
-        } else {
-            return -1;
         }
-
+        return -1;
     }
 
     //Identifier:   JavaLetter JavaLetterOrDigit*
